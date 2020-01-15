@@ -1,0 +1,91 @@
+#include <stdio.h>
+int main() {
+exec sql include sqlca;
+exec sql begin declare section;
+char pnum[4]; 
+char name[21]; 
+int age;
+char hnum[4]; 
+int times;
+char sqlstmt[1024];
+char sqlstmt2[1024];
+char pick[2];
+char *LOGIN= "fedora/oracle";
+exec sql end declare section;
+	
+exec sql whenever sqlerror goto error;
+exec sql whenever not found goto finish;
+
+exec sql connect :LOGIN;
+printf("Connected to ORACLE\n");
+
+printf("There are 3 tables in this db: \n");
+printf("1. Person\n"); 
+printf("2. Hobby \n"); 
+printf("3. Play\n");
+printf("\n\n");
+printf("Please enter number 1, 2 or 3 to select a table or enter q to quit. \n");
+scanf("%s",&pick);
+
+while(strcmp(pick, "q") != 0){
+  if(strcmp(pick, "1") == 0){ 
+    while(strcmp(pick, "q") != 0) {
+      printf("P#:\n");
+      scanf("%s", &pnum);
+      printf("Name:\n");
+      scanf("%s", &name); 
+      printf("Age:\n"); 
+      scanf("%d", &age); 
+      strcpy(sqlstmt, "insert into Person values (:v1, :v2, :v3)");
+      exec sql prepare s from :sqlstmt;
+      exec sql execute s using :pnum, :name, :age;
+      printf("('q' to quit Person table else, other key to continue.)\n");
+      scanf("%s",&pick);
+    }
+  }
+  if(strcmp(pick, "2") == 0){
+    while(strcmp(pick, "q") != 0) {
+      printf("H#:\n"); 
+      scanf("%s", &hnum); 
+      printf("Name:\n"); 
+      scanf("%s", &name); 
+      strcpy(sqlstmt2,"insert into Hobby values (:v1, :v2)");
+      exec sql prepare s from :sqlstmt2;
+      exec sql execute s using :hnum, :name;
+      printf("'q' to quit Hobby table else, other key to continue.\n");
+      scanf("%s",&pick);
+    }
+  }
+  if(strcmp(pick, "3") == 0) {
+    while(strcmp(pick, "q") != 0) {
+      printf("P#:\n"); 
+      scanf("%s", &pnum); 
+      printf("H#:\n"); 
+      scanf("%s", &hnum);
+      printf("Times:\n");
+      scanf("%d", &times);
+      strcpy(sqlstmt,"insert into Play values (:v1, :v2, :v3)");
+      exec sql prepare s from :sqlstmt;
+      exec sql execute s using :pnum, :hnum, :times;
+
+      printf("'q' to quit Play table else, other key to continue.)\n");
+      scanf("%s", &pick);
+    }
+  }
+  printf("There are 3 tables in db: \n");
+  printf("1. Person\n"); printf("2. Hobby\n"); printf("3. Play\n");
+  printf("\n\n");
+  printf("Please enter a number 1, 2 or 3 to select a table or q to quit.\n");
+  scanf("%s",&pick);
+  exec sql execute immediate "commit";
+}
+
+finish:
+  printf("Insertion done!\n");
+  exit(0);
+ 
+error:
+  printf("SQL error found, insert correct values or check duplicates. \n");
+  exec sql rollback release;
+  exit(1);
+}
